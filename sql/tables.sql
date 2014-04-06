@@ -1,24 +1,9 @@
--- MySQL dump 10.13  Distrib 5.5.35, for debian-linux-gnu (x86_64)
---
--- Host: 127.0.0.1    Database: mysql
--- ------------------------------------------------------
--- Server version	5.5.36-MariaDB-1-log
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `columns_priv`
---
-
 DROP TABLE IF EXISTS `columns_priv`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -33,11 +18,6 @@ CREATE TABLE `columns_priv` (
   PRIMARY KEY (`Host`,`Db`,`User`,`Table_name`,`Column_name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Column privileges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `db`
---
-
 DROP TABLE IF EXISTS `db`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -68,11 +48,6 @@ CREATE TABLE `db` (
   KEY `User` (`User`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Database privileges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `event`
---
-
 DROP TABLE IF EXISTS `event`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -102,11 +77,6 @@ CREATE TABLE `event` (
   PRIMARY KEY (`db`,`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Events';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `func`
---
-
 DROP TABLE IF EXISTS `func`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -118,11 +88,6 @@ CREATE TABLE `func` (
   PRIMARY KEY (`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='User defined functions';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `help_category`
---
-
 DROP TABLE IF EXISTS `help_category`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -135,11 +100,6 @@ CREATE TABLE `help_category` (
   UNIQUE KEY `name` (`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='help categories';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `help_keyword`
---
-
 DROP TABLE IF EXISTS `help_keyword`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -150,11 +110,6 @@ CREATE TABLE `help_keyword` (
   UNIQUE KEY `name` (`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='help keywords';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `help_relation`
---
-
 DROP TABLE IF EXISTS `help_relation`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -164,11 +119,6 @@ CREATE TABLE `help_relation` (
   PRIMARY KEY (`help_keyword_id`,`help_topic_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='keyword-topic relation';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `help_topic`
---
-
 DROP TABLE IF EXISTS `help_topic`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -183,11 +133,6 @@ CREATE TABLE `help_topic` (
   UNIQUE KEY `name` (`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='help topics';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `host`
---
-
 DROP TABLE IF EXISTS `host`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -215,11 +160,6 @@ CREATE TABLE `host` (
   PRIMARY KEY (`Host`,`Db`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Host privileges;  Merged with database privileges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `ndb_binlog_index`
---
-
 DROP TABLE IF EXISTS `ndb_binlog_index`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -234,11 +174,6 @@ CREATE TABLE `ndb_binlog_index` (
   PRIMARY KEY (`epoch`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `plugin`
---
-
 DROP TABLE IF EXISTS `plugin`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -248,11 +183,6 @@ CREATE TABLE `plugin` (
   PRIMARY KEY (`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='MySQL plugins';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `proc`
---
-
 DROP TABLE IF EXISTS `proc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -280,11 +210,6 @@ CREATE TABLE `proc` (
   PRIMARY KEY (`db`,`name`,`type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Stored Procedures';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `procs_priv`
---
-
 DROP TABLE IF EXISTS `procs_priv`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -301,11 +226,6 @@ CREATE TABLE `procs_priv` (
   KEY `Grantor` (`Grantor`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Procedure privileges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `proxies_priv`
---
-
 DROP TABLE IF EXISTS `proxies_priv`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -321,11 +241,6 @@ CREATE TABLE `proxies_priv` (
   KEY `Grantor` (`Grantor`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='User proxy privileges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `servers`
---
-
 DROP TABLE IF EXISTS `servers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -342,11 +257,6 @@ CREATE TABLE `servers` (
   PRIMARY KEY (`Server_name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='MySQL Foreign Servers table';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `tables_priv`
---
-
 DROP TABLE IF EXISTS `tables_priv`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -363,11 +273,6 @@ CREATE TABLE `tables_priv` (
   KEY `Grantor` (`Grantor`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Table privileges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `time_zone`
---
-
 DROP TABLE IF EXISTS `time_zone`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -377,11 +282,6 @@ CREATE TABLE `time_zone` (
   PRIMARY KEY (`Time_zone_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Time zones';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `time_zone_leap_second`
---
-
 DROP TABLE IF EXISTS `time_zone_leap_second`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -391,11 +291,6 @@ CREATE TABLE `time_zone_leap_second` (
   PRIMARY KEY (`Transition_time`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Leap seconds information for time zones';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `time_zone_name`
---
-
 DROP TABLE IF EXISTS `time_zone_name`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -405,11 +300,6 @@ CREATE TABLE `time_zone_name` (
   PRIMARY KEY (`Name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Time zone names';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `time_zone_transition`
---
-
 DROP TABLE IF EXISTS `time_zone_transition`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -420,11 +310,6 @@ CREATE TABLE `time_zone_transition` (
   PRIMARY KEY (`Time_zone_id`,`Transition_time`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Time zone transitions';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `time_zone_transition_type`
---
-
 DROP TABLE IF EXISTS `time_zone_transition_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -437,11 +322,6 @@ CREATE TABLE `time_zone_transition_type` (
   PRIMARY KEY (`Time_zone_id`,`Transition_type_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Time zone transition types';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `user`
---
-
 DROP TABLE IF EXISTS `user`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -491,11 +371,6 @@ CREATE TABLE `user` (
   PRIMARY KEY (`Host`,`User`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Users and global privileges';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `general_log`
---
-
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS `general_log` (
@@ -507,11 +382,6 @@ CREATE TABLE IF NOT EXISTS `general_log` (
   `argument` mediumtext NOT NULL
 ) ENGINE=CSV DEFAULT CHARSET=utf8 COMMENT='General log';
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `slow_log`
---
-
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS `slow_log` (
@@ -533,9 +403,9 @@ CREATE TABLE IF NOT EXISTS `slow_log` (
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed
+
+/* _footer.sql */
+-- vim: fdm=marker fdl=0 fdc=0
+
