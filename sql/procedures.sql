@@ -206,6 +206,55 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_drop` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop`()
+BEGIN
+	-- Declarations {{{
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		SHOW ERRORS;
+		ROLLBACK;
+	END;
+
+	DECLARE EXIT HANDLER FOR SQLWARNING
+	BEGIN
+		SHOW WARNINGS;
+		ROLLBACK;
+	END;
+
+	-- Declarations }}}
+
+	START TRANSACTION;
+
+	SET @sql = CONCAT('DROP DATABASE `', repl_get_schema_name(), '`');
+
+	SELECT @sql AS '# info'
+	UNION
+	SELECT 'INFO: You can create fresh replica by command CALL repl_init();';
+
+	PREPARE STMT FROM @sql;
+	EXECUTE STMT;
+	DEALLOCATE PREPARE STMT;
+
+	-- now do the job
+	COMMIT;
+	-- ROLLBACK;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_init` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -237,6 +286,10 @@ BEGIN
 
 	CALL repl_create_schema;
 	CALL repl_create_tables;
+
+	SELECT CONCAT('INFO: schema `mysql` is now replicated into schema `', repl_get_schema_name(), '`') AS '# info'
+	UNION
+	SELECT 'Info: You can stop replication with command CALL repl_drop();';
 
 	-- now do the job
 	COMMIT;
