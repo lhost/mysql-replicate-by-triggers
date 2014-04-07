@@ -286,10 +286,96 @@ BEGIN
 
 	CALL repl_create_schema;
 	CALL repl_create_tables;
+	CALL repl_sync_table_engines;
 
 	SELECT CONCAT('INFO: schema `mysql` is now replicated into schema `', repl_get_schema_name(), '`') AS '# info'
 	UNION
 	SELECT 'Info: You can stop replication with command CALL repl_drop();';
+
+	-- now do the job
+	COMMIT;
+	-- ROLLBACK;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_sync_table_engines` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_sync_table_engines`()
+BEGIN
+	-- Declarations {{{
+	DECLARE num_rows INT DEFAULT 0;
+	DECLARE tablename_val VARCHAR(32);
+	DECLARE schema_name VARCHAR(64);
+	DECLARE cmd_info VARCHAR(255);
+	DECLARE cmd VARCHAR(255);
+	DECLARE no_more_rows BOOLEAN;
+
+	-- Declare the cursor
+	DECLARE sync_engine_cur CURSOR FOR
+		SELECT s.TABLE_NAME,
+			CONCAT('/* ALTER TABLE `', repl_get_schema_name(), '`.`', s.TABLE_NAME, '` */') AS cmd_info,
+			CONCAT('ALTER TABLE `', repl_get_schema_name(), '`.`', s.TABLE_NAME, '` ENGINE = ', s.ENGINE) AS cmd 
+		FROM information_schema.TABLES AS s
+		INNER JOIN information_schema.TABLES AS d ON (
+			s.TABLE_NAME = d.TABLE_NAME
+			AND d.TABLE_SCHEMA = repl_get_schema_name()
+			AND s.ENGINE <> d.ENGINE
+		)
+		WHERE s.TABLE_SCHEMA = 'mysql';
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		SHOW ERRORS;
+		ROLLBACK;
+	END;
+
+	DECLARE EXIT HANDLER FOR SQLWARNING
+	BEGIN
+		SHOW WARNINGS;
+		ROLLBACK;
+	END;
+
+	-- Declare 'handlers' for exceptions
+	DECLARE CONTINUE HANDLER FOR NOT FOUND
+	SET no_more_rows = TRUE;
+
+	-- Declarations }}}
+
+	START TRANSACTION;
+
+	OPEN sync_engine_cur;
+	SELECT FOUND_ROWS() INTO num_rows;
+	the_loop: LOOP
+
+		FETCH sync_engine_cur
+		INTO tablename_val, cmd_info, cmd;
+
+		IF no_more_rows THEN
+			CLOSE sync_engine_cur;
+			LEAVE the_loop;
+		END IF;
+
+		-- SELECT cmd_info;
+		IF cmd <> '' THEN
+			SELECT cmd;
+			SET @sql = cmd;
+			PREPARE STMT FROM @sql;
+			EXECUTE STMT;
+			DEALLOCATE PREPARE STMT;
+		END IF;
+	END LOOP the_loop;
 
 	-- now do the job
 	COMMIT;
