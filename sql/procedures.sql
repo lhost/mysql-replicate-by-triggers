@@ -206,54 +206,6 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `repl_drop_triggers` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop_triggers`()
-BEGIN
-	-- Declarations {{{
-	DECLARE EXIT HANDLER FOR SQLEXCEPTION
-	BEGIN
-		SHOW ERRORS;
-		ROLLBACK;
-	END;
-
-	DECLARE EXIT HANDLER FOR SQLWARNING
-	BEGIN
-		SHOW WARNINGS;
-		ROLLBACK;
-	END;
-	-- Declarations }}}
-
-	SELECT
-		CONCAT('DROP TRIGGER IF EXISTS `repl_', LOWER(trigger_types.t_type), '_', s.TABLE_NAME, '`;') AS '-- SQL command'
-	FROM information_schema.TABLES AS s
-	INNER JOIN (
-		SELECT 'INSERT' AS t_type UNION SELECT 'UPDATE' AS t_type UNION SELECT 'DELETE' AS t_type
-	) AS trigger_types
-	LEFT JOIN information_schema.TRIGGERS AS t ON (
-		s.TABLE_SCHEMA = t.EVENT_OBJECT_SCHEMA
-		AND s.TABLE_NAME = t.EVENT_OBJECT_TABLE
-		AND trigger_types.t_type = t.EVENT_MANIPULATION
-	)
-	WHERE s.TABLE_SCHEMA = 'mysql'
-	ORDER BY s.TABLE_NAME;
-
-	SELECT 'SELECT "-- INFO: all triggers dropped" AS "-- INFO:";' AS '-- INFO';
-
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_create_triggers` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -361,35 +313,6 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `repl_help` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help`()
-	COMMENT 'print help message'
-BEGIN
-	SELECT '' AS '-- INFO:'
-	UNION
-	SELECT '-- INFO: You can create fresh replica by shell command'
-	UNION
-	SELECT '-- INFO:      echo "CALL repl_init();" | mysql mysql | mysql mysql'
-	UNION
-	SELECT '-- INFO: and stop your replica by shell command'
-	UNION
-	SELECT '-- INFO:      echo "CALL repl_drop();" | mysql mysql | mysql mysql;'
-	;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_drop` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -401,7 +324,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop`()
-	COMMENT 'drop replicated schema'
+    COMMENT 'drop replicated schema'
 BEGIN
 	CALL repl_help();
 
@@ -463,7 +386,7 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `repl_msg_quote` */;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_help` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -473,11 +396,19 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_msg_quote`(IN msg VARCHAR(255))
-	COMMENT 'quote message for user by "-- INFO:" prefix'
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help`()
+    COMMENT 'print help message'
 BEGIN
-	/* add prefix '-- INFO' to message */
-	SELECT CONCAT('SELECT "-- INFO: ', msg, '" AS "-- INFO:";') AS '-- INFO:';
+	SELECT '' AS '-- INFO:'
+	UNION
+	SELECT '-- INFO: You can create fresh replica by shell command'
+	UNION
+	SELECT '-- INFO:      echo "CALL repl_init();" | mysql mysql | mysql mysql'
+	UNION
+	SELECT '-- INFO: and stop your replica by shell command'
+	UNION
+	SELECT '-- INFO:      echo "CALL repl_drop();" | mysql mysql | mysql mysql;'
+	;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -525,6 +456,75 @@ BEGIN
 	COMMIT;
 	-- ROLLBACK;
 
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_drop_triggers` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop_triggers`()
+BEGIN
+	-- Declarations {{{
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		SHOW ERRORS;
+		ROLLBACK;
+	END;
+
+	DECLARE EXIT HANDLER FOR SQLWARNING
+	BEGIN
+		SHOW WARNINGS;
+		ROLLBACK;
+	END;
+	-- Declarations }}}
+
+	SELECT
+		CONCAT('DROP TRIGGER IF EXISTS `repl_', LOWER(trigger_types.t_type), '_', s.TABLE_NAME, '`;') AS '-- SQL command'
+	FROM information_schema.TABLES AS s
+	INNER JOIN (
+		SELECT 'INSERT' AS t_type UNION SELECT 'UPDATE' AS t_type UNION SELECT 'DELETE' AS t_type
+	) AS trigger_types
+	LEFT JOIN information_schema.TRIGGERS AS t ON (
+		s.TABLE_SCHEMA = t.EVENT_OBJECT_SCHEMA
+		AND s.TABLE_NAME = t.EVENT_OBJECT_TABLE
+		AND trigger_types.t_type = t.EVENT_MANIPULATION
+	)
+	WHERE s.TABLE_SCHEMA = 'mysql'
+	ORDER BY s.TABLE_NAME;
+
+	SELECT 'SELECT "-- INFO: all triggers dropped" AS "-- INFO:";' AS '-- INFO';
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_msg_quote` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_msg_quote`(IN msg VARCHAR(255))
+    COMMENT 'quote message for user by "-- INFO:" prefix'
+BEGIN
+	/* add prefix '-- INFO' to message */
+	SELECT CONCAT('SELECT "-- INFO: ', msg, '" AS "-- INFO:";') AS '-- INFO:';
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
