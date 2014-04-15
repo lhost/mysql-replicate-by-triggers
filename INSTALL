@@ -2,5 +2,13 @@
 cd /etc/mysql/
 git clone https://github.com/lhost/mysql-replicate-by-triggers.git
 cd mysql-replicate-by-triggers
+
+#
+# first create backup of your mysql schema
+#
+make backup
+
+#
+# Now do the job - start replication from `mysql` into `mysql_$hostname` schema
 make install
 

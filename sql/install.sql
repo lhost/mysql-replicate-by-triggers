@@ -7,13 +7,10 @@ USE `mysql`;
 
 START TRANSACTION;
 
-SELECT 'INFO: Installing procedures into `mysql` schema' AS `# info`;
+SELECT '-- INFO: Installing procedures into `mysql` schema' AS '-- INFO:';
 source procedures.sql;
-SELECT 'INFO: DONE' AS `# info`;
-
--- SHOW FUNCTION STATUS;
-SHOW PROCEDURE STATUS;
+SELECT '-- INFO: DONE - procedures installed' AS '-- INFO:';
 
 COMMIT;
 
-# vim: ft=sql
+-- vim: ft=sql

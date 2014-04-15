@@ -193,13 +193,197 @@ BEGIN
 		END IF;
 	END LOOP the_loop;
 
-	SELECT COUNT(*) AS 'number of tables in replicated schema'
+	SELECT CONCAT('-- ', COUNT(*)) AS '-- INFO: number of tables in replicated schema'
 	FROM information_schema.TABLES WHERE TABLE_SCHEMA = repl_get_schema_name();
 
 	-- now do the job
 	COMMIT;
 	-- ROLLBACK;
 
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_drop_triggers` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop_triggers`()
+BEGIN
+	-- Declarations {{{
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		SHOW ERRORS;
+		ROLLBACK;
+	END;
+
+	DECLARE EXIT HANDLER FOR SQLWARNING
+	BEGIN
+		SHOW WARNINGS;
+		ROLLBACK;
+	END;
+	-- Declarations }}}
+
+	SELECT
+		CONCAT('DROP TRIGGER IF EXISTS `repl_', LOWER(trigger_types.t_type), '_', s.TABLE_NAME, '`;') AS '-- SQL command'
+	FROM information_schema.TABLES AS s
+	INNER JOIN (
+		SELECT 'INSERT' AS t_type UNION SELECT 'UPDATE' AS t_type UNION SELECT 'DELETE' AS t_type
+	) AS trigger_types
+	LEFT JOIN information_schema.TRIGGERS AS t ON (
+		s.TABLE_SCHEMA = t.EVENT_OBJECT_SCHEMA
+		AND s.TABLE_NAME = t.EVENT_OBJECT_TABLE
+		AND trigger_types.t_type = t.EVENT_MANIPULATION
+	)
+	WHERE s.TABLE_SCHEMA = 'mysql'
+	ORDER BY s.TABLE_NAME;
+
+	SELECT 'SELECT "-- INFO: all triggers dropped" AS "-- INFO:";' AS '-- INFO';
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_create_triggers` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_triggers`()
+BEGIN
+	-- Declarations {{{
+	DECLARE num_rows INT DEFAULT 0;
+	DECLARE tablename_val VARCHAR(32);
+	DECLARE schema_name VARCHAR(64);
+	DECLARE cmd_info VARCHAR(255);
+	DECLARE cmd VARCHAR(255);
+	DECLARE t_type VARCHAR(16);
+	DECLARE t_name VARCHAR(255);
+	DECLARE no_more_rows BOOLEAN;
+
+	-- Declare the cursor
+	DECLARE missing_triggers_cur CURSOR FOR
+		SELECT s.TABLE_NAME,
+			trigger_types.t_type,
+			CONCAT('repl_', LOWER(trigger_types.t_type), '_', s.TABLE_NAME) AS t_name
+		FROM information_schema.TABLES AS s
+		INNER JOIN (
+			SELECT 'INSERT' AS t_type UNION SELECT 'UPDATE' AS t_type UNION SELECT 'DELETE' AS t_type
+		) AS trigger_types
+		LEFT JOIN information_schema.TRIGGERS AS t ON (
+			s.TABLE_SCHEMA = t.EVENT_OBJECT_SCHEMA
+			AND s.TABLE_NAME = t.EVENT_OBJECT_TABLE
+			AND trigger_types.t_type = t.EVENT_MANIPULATION
+		)
+		WHERE s.TABLE_SCHEMA = 'mysql'
+		ORDER BY s.TABLE_NAME;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		SHOW ERRORS;
+		ROLLBACK;
+	END;
+
+	DECLARE EXIT HANDLER FOR SQLWARNING
+	BEGIN
+		SHOW WARNINGS;
+		ROLLBACK;
+	END;
+
+	-- Declare 'handlers' for exceptions
+	DECLARE CONTINUE HANDLER FOR NOT FOUND
+	SET no_more_rows = TRUE;
+
+	-- Declarations }}}
+
+	START TRANSACTION;
+
+	OPEN missing_triggers_cur;
+	SELECT FOUND_ROWS() INTO num_rows;
+	the_loop: LOOP
+
+		FETCH missing_triggers_cur
+		INTO tablename_val, t_type, t_name;
+
+		IF no_more_rows THEN
+			CLOSE missing_triggers_cur;
+			LEAVE the_loop;
+		END IF;
+
+		/* build CREATE TRIGGER query based on trigger type */
+		IF t_type = 'INSERT' THEN
+			SELECT '-- INFO: create INSERT trigger' AS '-- INFO:';
+		ELSE
+			IF t_type = 'UPDATE' THEN
+				SELECT '-- INFO: create UPDATE trigger' AS '-- INFO:';
+			ELSE
+				IF t_type = 'DELETE' THEN
+					-- create INSERT TRIGGER
+			SELECT '-- INFO: create DELETE trigger' AS '-- INFO:';
+				ELSE
+					SELECT CONCAT('-- ERROR: wrong trigger type "', t_type, '"') AS '# error';
+				END IF;
+			END IF;
+		END IF;
+
+		-- SELECT cmd_info;
+		IF cmd <> '' THEN
+			SELECT cmd;
+			-- SET @sql = cmd;
+			-- PREPARE STMT FROM @sql;
+			-- EXECUTE STMT;
+			-- DEALLOCATE PREPARE STMT;
+		END IF;
+	END LOOP the_loop;
+
+	-- now do the job
+	COMMIT;
+	-- ROLLBACK;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_help` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help`()
+	COMMENT 'print help message'
+BEGIN
+	SELECT '' AS '-- INFO:'
+	UNION
+	SELECT '-- INFO: You can create fresh replica by shell command'
+	UNION
+	SELECT '-- INFO:      echo "CALL repl_init();" | mysql mysql | mysql mysql'
+	UNION
+	SELECT '-- INFO: and stop your replica by shell command'
+	UNION
+	SELECT '-- INFO:      echo "CALL repl_drop();" | mysql mysql | mysql mysql;'
+	;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -217,38 +401,83 @@ DELIMITER ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop`()
+	COMMENT 'drop replicated schema'
+BEGIN
+	CALL repl_help();
+
+	SELECT 'START TRANSACTION;' AS '-- SQL command';
+	CALL repl_drop_triggers();
+	SELECT CONCAT('DROP DATABASE `', repl_get_schema_name(), '`;') AS '-- SQL command'
+	UNION
+	SELECT 'COMMIT;' AS '-- now do the job';
+
+	CALL repl_msg_quote(CONCAT('database `', repl_get_schema_name(), '`, dropped'));
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_execute` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_execute`(IN `cmd` TEXT)
+    MODIFIES SQL DATA
+    COMMENT 'prepare and execute SQL statement'
 BEGIN
 	-- Declarations {{{
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
 	BEGIN
 		SHOW ERRORS;
-		ROLLBACK;
+		-- ROLLBACK;
 	END;
 
 	DECLARE EXIT HANDLER FOR SQLWARNING
 	BEGIN
 		SHOW WARNINGS;
-		ROLLBACK;
+		-- ROLLBACK;
 	END;
 
+	-- SELECT cmd AS '# DEBUG';
 	-- Declarations }}}
-
-	START TRANSACTION;
-
-	SET @sql = CONCAT('DROP DATABASE `', repl_get_schema_name(), '`');
-
-	SELECT @sql AS '# info'
-	UNION
-	SELECT 'INFO: You can create fresh replica by command CALL repl_init();';
-
-	PREPARE STMT FROM @sql;
-	EXECUTE STMT;
-	DEALLOCATE PREPARE STMT;
-
-	-- now do the job
-	COMMIT;
-	-- ROLLBACK;
-
+	IF cmd <> '' THEN
+		SELECT cmd;
+		SET @sql = cmd;
+		PREPARE STMT FROM @sql;
+		EXECUTE STMT;
+		DEALLOCATE PREPARE STMT;
+	ELSE
+		SELECT "-- WARNING: empty command passed to CALL repl_execute('')" AS '# warning';
+	END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_msg_quote` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_msg_quote`(IN msg VARCHAR(255))
+	COMMENT 'quote message for user by "-- INFO:" prefix'
+BEGIN
+	/* add prefix '-- INFO' to message */
+	SELECT CONCAT('SELECT "-- INFO: ', msg, '" AS "-- INFO:";') AS '-- INFO:';
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -287,10 +516,10 @@ BEGIN
 	CALL repl_create_schema;
 	CALL repl_create_tables;
 	CALL repl_sync_table_engines;
+	CALL repl_create_triggers;
 
-	SELECT CONCAT('INFO: schema `mysql` is now replicated into schema `', repl_get_schema_name(), '`') AS '# info'
-	UNION
-	SELECT 'Info: You can stop replication with command CALL repl_drop();';
+	CALL repl_msg_quote(CONCAT('schema `mysql` is now replicated into schema `', repl_get_schema_name(), '`'));
+	CALL repl_help;
 
 	-- now do the job
 	COMMIT;
