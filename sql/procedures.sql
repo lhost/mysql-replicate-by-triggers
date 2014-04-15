@@ -98,7 +98,7 @@ BEGIN
 		-- schema `mysql_$hostname` found
 		CLOSE get_schema_name_cur;
 	ELSE
-		SET @sql = CONCAT('CREATE DATABASE `', repl_get_schema_name(), '`;');
+		SET @sql = CONCAT('CREATE DATABASE `', repl_get_schema_name(), '`');
 		SELECT @sql;
 		PREPARE STMT FROM @sql;
 		EXECUTE STMT;
@@ -399,16 +399,44 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help`()
     COMMENT 'print help message'
 BEGIN
-	SELECT '' AS '-- INFO:'
-	UNION
-	SELECT '-- INFO: You can create fresh replica by shell command'
-	UNION
-	SELECT '-- INFO:      echo "CALL repl_init();" | mysql mysql | mysql mysql'
-	UNION
-	SELECT '-- INFO: and stop your replica by shell command'
-	UNION
-	SELECT '-- INFO:      echo "CALL repl_drop();" | mysql mysql | mysql mysql;'
-	;
+	DECLARE help_message TEXT;
+
+	CALL repl_help_message(help_message);
+	-- SELECT help_message AS '-- INFO:';
+	SELECT CONCAT("SELECT '' AS '-- INFO' UNION SELECT'",
+		REPLACE(help_message, '\n', "' UNION SELECT '"),
+		"';"
+	) INTO @sql;
+	PREPARE STMT FROM @sql;
+	EXECUTE STMT;
+	DEALLOCATE PREPARE STMT;
+	-- SELECT REPLACE(help_message, '\n', '\n-- INFO:') AS '-- INFO';
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_help_message` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help_message`(OUT help_message TEXT)
+    COMMENT 'internal function to return  help message'
+BEGIN
+	SELECT
+'You can create fresh replica by shell command
+     echo "CALL repl_init();" | mysql mysql | mysql mysql
+and stop your replica by shell command
+     echo "CALL repl_drop();" | mysql mysql | mysql mysql
+' INTO help_message;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -450,7 +478,9 @@ BEGIN
 	CALL repl_create_triggers;
 
 	CALL repl_msg_quote(CONCAT('schema `mysql` is now replicated into schema `', repl_get_schema_name(), '`'));
+	SELECT "SELECT '' AS 'xxxxxx' UNION SELECT REPLACE('" AS '/* msg begin */';
 	CALL repl_help;
+	SELECT "', '\n', \"' UNION SELECT '\") AS '-- ============================================================';" AS '/* msg end */';
 
 	-- now do the job
 	COMMIT;
