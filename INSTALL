@@ -1,0 +1,6 @@
+
+cd /etc/mysql/
+git clone https://github.com/lhost/mysql-replicate-by-triggers.git
+cd mysql-replicate-by-triggers
+make install
+
