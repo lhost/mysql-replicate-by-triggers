@@ -1,17 +1,4 @@
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 /*!50003 DROP FUNCTION IF EXISTS `GetHostName` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` FUNCTION `GetHostName`() RETURNS varchar(64) CHARSET utf8
     DETERMINISTIC
@@ -25,19 +12,7 @@ BEGIN
 	RETURN local_hostname;
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP FUNCTION IF EXISTS `repl_get_schema_name` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` FUNCTION `repl_get_schema_name`() RETURNS varchar(64) CHARSET utf8
     DETERMINISTIC
@@ -51,19 +26,7 @@ BEGIN
 	RETURN schema_name;
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_create_schema` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_schema`()
 BEGIN
@@ -111,24 +74,11 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_create_tables` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_tables`()
 BEGIN
 	-- Declarations {{{
-	DECLARE num_rows INT DEFAULT 0;
 	DECLARE tablename_val VARCHAR(32);
 	DECLARE schema_name VARCHAR(64);
 	DECLARE cmd_info VARCHAR(255);
@@ -172,7 +122,6 @@ BEGIN
 	START TRANSACTION;
 
 	OPEN get_table_name_cur;
-	SELECT FOUND_ROWS() INTO num_rows;
 	the_loop: LOOP
 
 		FETCH get_table_name_cur
@@ -202,24 +151,11 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_create_triggers` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_triggers`()
 BEGIN
 	-- Declarations {{{
-	DECLARE num_rows INT DEFAULT 0;
 	DECLARE tablename_val VARCHAR(32);
 	DECLARE schema_name VARCHAR(64);
 	DECLARE cmd_info VARCHAR(255);
@@ -266,7 +202,6 @@ BEGIN
 	START TRANSACTION;
 
 	OPEN missing_triggers_cur;
-	SELECT FOUND_ROWS() INTO num_rows;
 	the_loop: LOOP
 
 		FETCH missing_triggers_cur
@@ -277,21 +212,42 @@ BEGIN
 			LEAVE the_loop;
 		END IF;
 
+		CALL repl_execute(CONCAT(
+				'SELECT "DROP TRIGGER IF EXISTS `', t_name,
+				'`;" AS "SELECT \'-- INFO: drop & create trigger `', t_name,
+				'`\' AS \'-- INFO:\';";')
+		);
+
 		/* build CREATE TRIGGER query based on trigger type */
-		IF t_type = 'INSERT' THEN
-			SELECT '-- INFO: create INSERT trigger' AS '-- INFO:';
-		ELSE
-			IF t_type = 'UPDATE' THEN
+		CASE t_type
+			WHEN 'INSERT' THEN
+				SELECT '-- INFO: create INSERT trigger' AS '-- INFO:';
+				SELECT CONCAT("CREATE DEFINER = CURRENT_USER TRIGGER `", t_name,
+					"` AFTER INSERT ON `", tablename_val,
+					"` FOR EACH ROW BEGIN INSERT INTO `", repl_get_schema_name(),
+					"`.`", tablename_val, "` SET "
+				) AS 'DELIMITER ;;' ;
+
+				CALL repl_get_table_cols('mysql', tablename_val, @tbl_columns, @tbl_prikeys);
+
+				SELECT @tbl_columns AS '/* insert columns */'
+				UNION
+				SELECT ', /* --- PK separator --- */'
+				UNION
+				SELECT @tbl_prikeys;
+
+				SELECT ' ; END ;' AS '/* end of insert trigger */'
+				UNION
+				SELECT ';;'
+				UNION
+				SELECT 'DELIMITER ;';
+			WHEN 'UPDATE' THEN
 				SELECT '-- INFO: create UPDATE trigger' AS '-- INFO:';
+			WHEN 'DELETE' THEN
+				SELECT '-- INFO: create DELETE trigger' AS '-- INFO:';
 			ELSE
-				IF t_type = 'DELETE' THEN
-					-- create INSERT TRIGGER
-			SELECT '-- INFO: create DELETE trigger' AS '-- INFO:';
-				ELSE
 					SELECT CONCAT('-- ERROR: wrong trigger type "', t_type, '"') AS '# error';
-				END IF;
-			END IF;
-		END IF;
+		END CASE;
 
 		-- SELECT cmd_info;
 		IF cmd <> '' THEN
@@ -309,24 +265,12 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_drop` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop`()
     COMMENT 'drop replicated schema'
 BEGIN
-	CALL repl_help();
+	-- XXX: CALL repl_help();
 
 	SELECT 'START TRANSACTION;' AS '-- SQL command';
 	CALL repl_drop_triggers();
@@ -338,19 +282,7 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_execute` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_execute`(IN `cmd` TEXT)
     MODIFIES SQL DATA
@@ -372,7 +304,7 @@ BEGIN
 	-- SELECT cmd AS '# DEBUG';
 	-- Declarations }}}
 	IF cmd <> '' THEN
-		SELECT cmd;
+		-- SELECT cmd;
 		SET @sql = cmd;
 		PREPARE STMT FROM @sql;
 		EXECUTE STMT;
@@ -382,19 +314,7 @@ BEGIN
 	END IF;
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_help` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help`()
     COMMENT 'print help message'
@@ -414,44 +334,7 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `repl_help_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help_message`(OUT help_message TEXT)
-    COMMENT 'internal function to return  help message'
-BEGIN
-	SELECT
-'You can create fresh replica by shell command
-     echo "CALL repl_init();" | mysql mysql | mysql mysql
-and stop your replica by shell command
-     echo "CALL repl_drop();" | mysql mysql | mysql mysql
-' INTO help_message;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_drop_triggers` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop_triggers`()
 BEGIN
@@ -470,7 +353,8 @@ BEGIN
 	-- Declarations }}}
 
 	SELECT
-		CONCAT('DROP TRIGGER IF EXISTS `repl_', LOWER(trigger_types.t_type), '_', s.TABLE_NAME, '`;') AS '-- SQL command'
+		CONCAT('DROP TRIGGER IF EXISTS `repl_', LOWER(trigger_types.t_type), '_', s.TABLE_NAME, '`;')
+			AS 'SELECT "-- INFO: Dropping triggers" AS "-- INFO:";'
 	FROM information_schema.TABLES AS s
 	INNER JOIN (
 		SELECT 'INSERT' AS t_type UNION SELECT 'UPDATE' AS t_type UNION SELECT 'DELETE' AS t_type
@@ -487,19 +371,81 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_get_table_cols` */;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_get_table_cols`(IN tbl_schema varchar(32), IN tbl_table varchar(32), OUT tbl_columns TEXT, OUT tbl_prikeys TEXT)
+BEGIN
+	-- Declarations {{{
+	DECLARE colname VARCHAR(255);
+	DECLARE column_key VARCHAR(3);
+	DECLARE no_more_rows BOOLEAN;
+
+	-- Declare the cursor
+	DECLARE tbl_colums_cur CURSOR FOR
+		SELECT CONCAT('`', c.COLUMN_NAME, '` = NEW.`', c.COLUMN_NAME, '`'),
+			c.COLUMN_KEY
+		FROM information_schema.COLUMNS AS c
+		WHERE c.TABLE_SCHEMA = tbl_schema
+			AND c.TABLE_NAME = tbl_table
+		ORDER BY c.COLUMN_KEY DESC, c.ORDINAL_POSITION;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN
+		SHOW ERRORS;
+		ROLLBACK;
+	END;
+
+	DECLARE EXIT HANDLER FOR SQLWARNING
+	BEGIN
+		SHOW WARNINGS;
+		ROLLBACK;
+	END;
+
+	-- Declare 'handlers' for exceptions
+	DECLARE CONTINUE HANDLER FOR NOT FOUND
+	SET no_more_rows = TRUE;
+
+	-- Declarations }}}
+
+	SET tbl_columns = '';
+	SET tbl_prikeys = '';
+
+	OPEN tbl_colums_cur;
+	the_loop: LOOP
+
+		FETCH tbl_colums_cur INTO colname, column_key;
+
+		IF no_more_rows THEN
+			CLOSE tbl_colums_cur;
+			LEAVE the_loop;
+		END IF;
+
+		-- select '-- DEBUG: ', colname, column_key, tbl_columns;
+		CASE column_key
+			WHEN 'PRI' THEN
+				SET tbl_prikeys = CONCAT(tbl_prikeys, IF(tbl_prikeys = '', '', ', '), colname, ' /* PK */ ');
+			ELSE
+				SET tbl_columns = CONCAT(tbl_columns, IF(tbl_columns = '', '', ', '), colname);
+		END CASE;
+
+	END LOOP the_loop;
+
+END ;;
+DELIMITER ;
+/*!50003 DROP PROCEDURE IF EXISTS `repl_help_message` */;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help_message`(OUT help_message TEXT)
+    COMMENT 'internal function to return  help message'
+BEGIN
+	SELECT
+'You can create fresh replica by shell command
+     echo "CALL repl_init();" | mysql mysql | mysql mysql
+and stop your replica by shell command
+     echo "CALL repl_drop();" | mysql mysql | mysql mysql
+' INTO help_message;
+END ;;
+DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_init` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_init`()
 BEGIN
@@ -536,19 +482,7 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_msg_quote` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_msg_quote`(IN msg VARCHAR(255))
     COMMENT 'quote message for user by "-- INFO:" prefix'
@@ -557,19 +491,7 @@ BEGIN
 	SELECT CONCAT('SELECT "-- INFO: ', msg, '" AS "-- INFO:";') AS '-- INFO:';
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_sync_table_engines` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_sync_table_engines`()
 BEGIN
@@ -642,15 +564,7 @@ BEGIN
 
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 
 /* _footer.sql */
