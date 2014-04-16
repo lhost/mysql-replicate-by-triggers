@@ -23,7 +23,7 @@ sql/triggers.sql: .FORCE
 	@cat sql/_footer.sql >> $@
 
 sql/procedures.sql: .FORCE
-	$(MYSQLDUMP_NODATA) --routines --no-create-info --skip-triggers $(DATABASE) > $@
+	$(MYSQLDUMP_NODATA) --routines --no-create-info --skip-triggers $(DATABASE) | grep -v -e '^/\*\![0-9]* SET ' > $@
 	@cat sql/_footer.sql >> $@
 
 sql/tables.sql: .FORCE
