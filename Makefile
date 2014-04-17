@@ -1,6 +1,10 @@
-DATABASE = mysql
+#
+# Set to name of the database/schema, where you want to install SQL procedures
+#
+DATABASE = repl
 
-MYSQLDUMP_NODATA = mysqldump --no-data --skip-dump-date --skip-comments --skip-set-charset
+MYSQLDUMP			= mysqldump --opt --routines
+MYSQLDUMP_NODATA	= mysqldump --no-data --skip-dump-date --skip-comments --skip-set-charset
 
 .PHONY: sql/%.sql dump backup
 
@@ -9,7 +13,7 @@ MYSQLDUMP_NODATA = mysqldump --no-data --skip-dump-date --skip-comments --skip-s
 all:
 	@echo 'make dump      - dump triggers, procedures and table structures into sql/' 
 	@echo 'make backup    - create backup' 
-	@echo 'make install   - install procedures into `mysql` schema' 
+	@echo 'make install   - install procedures into `repl` schema' 
 
 dump: sql/triggers.sql sql/procedures.sql sql/tables.sql
 
@@ -33,11 +37,11 @@ sql/tables.sql: .FORCE
 backup:
 	 @BACKUP_FILE=~/backup/$(DATABASE)-`date '+%Y-%m-%d-%X'`.sql; \
 		 echo "Dumping database into $$BACKUP_FILE"; \
-		 mysqldump --opt --routines --databases $(DATABASE) > $$BACKUP_FILE && \
+		 $(MYSQLDUMP) --databases $(DATABASE) > $$BACKUP_FILE && \
 		 pbzip2 --best $$BACKUP_FILE
 
 install:
-	./install.sh
+	DATABASE="$(DATABASE)" ./install.sh
 
 uninstall:
-	./uninstall.sh
+	DATABASE="$(DATABASE)" ./uninstall.sh

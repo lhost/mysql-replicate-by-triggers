@@ -1,34 +1,6 @@
-/*!50003 DROP FUNCTION IF EXISTS `GetHostName` */;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` FUNCTION `GetHostName`() RETURNS varchar(64) CHARSET utf8
-    DETERMINISTIC
-BEGIN
-	DECLARE local_hostname VARCHAR(64);
-
-	SELECT variable_value INTO local_hostname
-	FROM information_schema.global_variables
-	WHERE variable_name = 'hostname';
-
-	RETURN local_hostname;
-END ;;
-DELIMITER ;
-/*!50003 DROP FUNCTION IF EXISTS `repl_get_schema_name` */;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` FUNCTION `repl_get_schema_name`() RETURNS varchar(64) CHARSET utf8
-    DETERMINISTIC
-BEGIN
-	DECLARE schema_name VARCHAR(64);
-
-	SELECT CONCAT('mysql_', variable_value) INTO schema_name
-	FROM information_schema.global_variables
-	WHERE variable_name = 'hostname';
-
-	RETURN schema_name;
-END ;;
-DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_create_schema` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_schema`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_schema`(IN dstdb VARCHAR(64))
 BEGIN
 	-- Declarations {{{
 	DECLARE num_rows INT DEFAULT 0;
@@ -37,7 +9,7 @@ BEGIN
 	DECLARE get_schema_name_cur CURSOR FOR
 		SELECT SCHEMA_NAME
 		FROM information_schema.SCHEMATA
-		WHERE SCHEMA_NAME = repl_get_schema_name();
+		WHERE SCHEMA_NAME = dstdb;
 
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
 	BEGIN
@@ -61,7 +33,7 @@ BEGIN
 		-- schema `mysql_$hostname` found
 		CLOSE get_schema_name_cur;
 	ELSE
-		SET @sql = CONCAT('CREATE DATABASE `', repl_get_schema_name(), '`');
+		SET @sql = CONCAT('CREATE DATABASE `', dstdb, '`');
 		SELECT @sql;
 		PREPARE STMT FROM @sql;
 		EXECUTE STMT;
@@ -76,7 +48,7 @@ END ;;
 DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_create_tables` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_tables`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_tables`(IN srcdb VARCHAR(64), IN dstdb VARCHAR(64))
 BEGIN
 	-- Declarations {{{
 	DECLARE tablename_val VARCHAR(32);
@@ -89,17 +61,17 @@ BEGIN
 	DECLARE get_table_name_cur CURSOR FOR
 		SELECT s.TABLE_NAME,
 			IF(ISNULL(d.TABLE_NAME),
-				CONCAT('/* CREATE TABLE `', repl_get_schema_name(), '`.`', s.TABLE_NAME, '` */'),
+				CONCAT('/* CREATE TABLE `', dstdb, '`.`', s.TABLE_NAME, '` */'),
 				CONCAT('/* table ', d.TABLE_NAME, ' already exists */')
 			) AS cmd_info,
 			IF(ISNULL(d.TABLE_NAME),
 				/* generate CREATE TABLE commands for missing tables */
-				CONCAT('CREATE TABLE `', repl_get_schema_name(), '`.`', s.TABLE_NAME, '` AS SELECT * FROM `mysql`.`', s.TABLE_NAME, '`'),
+				CONCAT('CREATE TABLE `', dstdb, '`.`', s.TABLE_NAME, '` AS SELECT * FROM `', srcdb, '`.`', s.TABLE_NAME, '`'),
 				''
 			) AS cmd 
 		FROM information_schema.TABLES AS s
-		LEFT JOIN information_schema.TABLES AS d ON (s.TABLE_NAME = d.TABLE_NAME AND d.TABLE_SCHEMA = repl_get_schema_name())
-		WHERE s.TABLE_SCHEMA = 'mysql';
+		LEFT JOIN information_schema.TABLES AS d ON (s.TABLE_NAME = d.TABLE_NAME AND d.TABLE_SCHEMA = dstdb)
+		WHERE s.TABLE_SCHEMA = srcdb;
 
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
 	BEGIN
@@ -143,7 +115,7 @@ BEGIN
 	END LOOP the_loop;
 
 	SELECT CONCAT('-- ', COUNT(*)) AS '-- INFO: number of tables in replicated schema'
-	FROM information_schema.TABLES WHERE TABLE_SCHEMA = repl_get_schema_name();
+	FROM information_schema.TABLES WHERE TABLE_SCHEMA = dstdb;
 
 	-- now do the job
 	COMMIT;
@@ -153,7 +125,7 @@ END ;;
 DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_create_triggers` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_triggers`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_create_triggers`(IN srcdb VARCHAR(64), IN dstdb VARCHAR(64))
 BEGIN
 	-- Declarations {{{
 	DECLARE tablename_val VARCHAR(32);
@@ -178,7 +150,7 @@ BEGIN
 			AND s.TABLE_NAME = t.EVENT_OBJECT_TABLE
 			AND trigger_types.t_type = t.EVENT_MANIPULATION
 		)
-		WHERE s.TABLE_SCHEMA = 'mysql'
+		WHERE s.TABLE_SCHEMA = srcdb
 		ORDER BY s.TABLE_NAME;
 
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -224,11 +196,11 @@ BEGIN
 				SELECT '-- INFO: create INSERT trigger' AS '-- INFO:';
 				SELECT CONCAT("CREATE DEFINER = CURRENT_USER TRIGGER `", t_name,
 					"` AFTER INSERT ON `", tablename_val,
-					"` FOR EACH ROW BEGIN INSERT INTO `", repl_get_schema_name(),
+					"` FOR EACH ROW BEGIN INSERT INTO `", dstdb,
 					"`.`", tablename_val, "` SET "
 				) AS 'DELIMITER ;;' ;
 
-				CALL repl_get_table_cols('mysql', tablename_val, @tbl_columns, @tbl_prikeys);
+				CALL repl_get_table_cols(srcdb, tablename_val, @tbl_columns, @tbl_prikeys);
 
 				SELECT @tbl_columns AS '/* insert columns */'
 				UNION
@@ -267,18 +239,18 @@ END ;;
 DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_drop` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop`(IN srcdb VARCHAR(64), IN dstdb VARCHAR(64))
     COMMENT 'drop replicated schema'
 BEGIN
 	-- XXX: CALL repl_help();
 
 	SELECT 'START TRANSACTION;' AS '-- SQL command';
 	CALL repl_drop_triggers();
-	SELECT CONCAT('DROP DATABASE `', repl_get_schema_name(), '`;') AS '-- SQL command'
+	SELECT CONCAT('DROP DATABASE `', dstdb, '`;') AS '-- SQL command'
 	UNION
 	SELECT 'COMMIT;' AS '-- now do the job';
 
-	CALL repl_msg_quote(CONCAT('database `', repl_get_schema_name(), '`, dropped'));
+	CALL repl_msg_quote(CONCAT('database `', dstdb, '`, dropped'));
 
 END ;;
 DELIMITER ;
@@ -336,7 +308,7 @@ END ;;
 DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_drop_triggers` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop_triggers`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_drop_triggers`(IN srcdb VARCHAR(64), IN dstdb VARCHAR(64))
 BEGIN
 	-- Declarations {{{
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -364,7 +336,7 @@ BEGIN
 		AND s.TABLE_NAME = t.EVENT_OBJECT_TABLE
 		AND trigger_types.t_type = t.EVENT_MANIPULATION
 	)
-	WHERE s.TABLE_SCHEMA = 'mysql'
+	WHERE s.TABLE_SCHEMA = srcdb
 	ORDER BY s.TABLE_NAME;
 
 	SELECT 'SELECT "-- INFO: all triggers dropped" AS "-- INFO:";' AS '-- INFO';
@@ -439,15 +411,15 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_help_message`(OUT help_message
 BEGIN
 	SELECT
 'You can create fresh replica by shell command
-     echo "CALL repl_init();" | mysql mysql | mysql mysql
+     DATABASE="name_of_db"; echo "CALL repl_init(\'srcdb\' ,\'dstdb\');" | mysql "$DATABASE" | mysql "$DATABASE"
 and stop your replica by shell command
-     echo "CALL repl_drop();" | mysql mysql | mysql mysql
+     DATABASE="name_of_db"; echo "CALL repl_drop(\'srcdb\' ,\'dstdb\');" | mysql "$DATABASE" | mysql "$DATABASE"
 ' INTO help_message;
 END ;;
 DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_init` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_init`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_init`(IN srcdb VARCHAR(64), IN dstdb VARCHAR(64))
 BEGIN
 	-- Declarations {{{
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -466,12 +438,12 @@ BEGIN
 
 	START TRANSACTION;
 
-	CALL repl_create_schema;
-	CALL repl_create_tables;
-	CALL repl_sync_table_engines;
-	CALL repl_create_triggers;
+	CALL repl_create_schema(dstdb);
+	CALL repl_create_tables(srcdb, dstdb);
+	CALL repl_sync_table_engines(srcdb, dstdb);
+	CALL repl_create_triggers(srcdb, dstdb);
 
-	CALL repl_msg_quote(CONCAT('schema `mysql` is now replicated into schema `', repl_get_schema_name(), '`'));
+	CALL repl_msg_quote(CONCAT('schema `', srcdb, '` is now replicated into schema `', dstdb, '`'));
 	SELECT "SELECT '' AS 'xxxxxx' UNION SELECT REPLACE('" AS '/* msg begin */';
 	CALL repl_help;
 	SELECT "', '\n', \"' UNION SELECT '\") AS '-- ============================================================';" AS '/* msg end */';
@@ -493,7 +465,7 @@ END ;;
 DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_sync_table_engines` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_sync_table_engines`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_sync_table_engines`(IN srcdb VARCHAR(64), IN dstdb VARCHAR(64))
 BEGIN
 	-- Declarations {{{
 	DECLARE num_rows INT DEFAULT 0;
@@ -506,15 +478,15 @@ BEGIN
 	-- Declare the cursor
 	DECLARE sync_engine_cur CURSOR FOR
 		SELECT s.TABLE_NAME,
-			CONCAT('/* ALTER TABLE `', repl_get_schema_name(), '`.`', s.TABLE_NAME, '` */') AS cmd_info,
-			CONCAT('ALTER TABLE `', repl_get_schema_name(), '`.`', s.TABLE_NAME, '` ENGINE = ', s.ENGINE) AS cmd 
+			CONCAT('/* ALTER TABLE `', dstdb, '`.`', s.TABLE_NAME, '` */') AS cmd_info,
+			CONCAT('ALTER TABLE `', dstdb, '`.`', s.TABLE_NAME, '` ENGINE = ', s.ENGINE) AS cmd 
 		FROM information_schema.TABLES AS s
 		INNER JOIN information_schema.TABLES AS d ON (
 			s.TABLE_NAME = d.TABLE_NAME
-			AND d.TABLE_SCHEMA = repl_get_schema_name()
+			AND d.TABLE_SCHEMA = dstdb
 			AND s.ENGINE <> d.ENGINE
 		)
-		WHERE s.TABLE_SCHEMA = 'mysql';
+		WHERE s.TABLE_SCHEMA = srcdb;
 
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
 	BEGIN

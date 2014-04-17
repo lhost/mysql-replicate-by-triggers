@@ -3,11 +3,9 @@
 -- set charset
 /*!40101 SET NAMES utf8 */;
 
-USE `mysql`;
-
 START TRANSACTION;
 
-SELECT '-- INFO: Installing procedures into `mysql` schema' AS '-- INFO:';
+SELECT '-- INFO: Installing procedures' AS '-- INFO:';
 source procedures.sql;
 SELECT '-- INFO: DONE - procedures installed' AS '-- INFO:';
 
