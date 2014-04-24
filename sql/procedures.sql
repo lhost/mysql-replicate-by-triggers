@@ -136,6 +136,10 @@ BEGIN
 	DECLARE t_name VARCHAR(255);
 	DECLARE no_more_rows BOOLEAN;
 
+	SELECT 'SELECT SCHEMA() INTO @cur_schema;' AS '-- INFO: current schema is:'
+	UNION
+	SELECT CONCAT('USE `', srcdb, '`;');
+
 	-- Declare the cursor
 	DECLARE missing_triggers_cur CURSOR FOR
 		SELECT s.TABLE_NAME,
@@ -200,13 +204,18 @@ BEGIN
 					"`.`", tablename_val, "` SET "
 				) AS 'DELIMITER ;;' ;
 
-				CALL repl_get_table_cols(srcdb, tablename_val, @tbl_columns, @tbl_prikeys);
+				CALL repl_get_table_cols(srcdb, tablename_val, 'INSERT', @tbl_columns, @tbl_prikeys);
 
-				SELECT @tbl_columns AS '/* insert columns */'
-				UNION
-				SELECT ', /* --- PK separator --- */'
-				UNION
-				SELECT @tbl_prikeys;
+				-- SELECT @tbl_prikeys AS '-- prikeys';
+				IF LENGTH(@tbl_prikeys) > 0 THEN
+					SELECT @tbl_columns AS '/* insert columns */'
+					UNION
+					SELECT ', /* --- PK separator --- */'
+					UNION
+					SELECT @tbl_prikeys;
+				ELSE
+					SELECT @tbl_columns AS '/* insert columns */';
+				END IF;
 
 				SELECT ' ; END ;' AS '/* end of insert trigger */'
 				UNION
@@ -215,8 +224,42 @@ BEGIN
 				SELECT 'DELIMITER ;';
 			WHEN 'UPDATE' THEN
 				SELECT '-- INFO: create UPDATE trigger' AS '-- INFO:';
+				SELECT CONCAT("CREATE DEFINER = CURRENT_USER TRIGGER `", t_name,
+					"` AFTER UPDATE ON `", tablename_val,
+					"` FOR EACH ROW BEGIN UPDATE `", dstdb,
+					"`.`", tablename_val, "` SET "
+				) AS 'DELIMITER ;;' ;
+
+				CALL repl_get_table_cols(srcdb, tablename_val, 'UPDATE', @tbl_columns, @tbl_prikeys);
+
+				SELECT @tbl_columns AS '/* update columns */'
+				UNION
+				SELECT ' WHERE /* --- PK separator --- */'
+				UNION
+				SELECT @tbl_prikeys;
+
+				SELECT ' ; END ;' AS '/* end of update trigger */'
+				UNION
+				SELECT ';;'
+				UNION
+				SELECT 'DELIMITER ;';
 			WHEN 'DELETE' THEN
 				SELECT '-- INFO: create DELETE trigger' AS '-- INFO:';
+				SELECT CONCAT("CREATE DEFINER = CURRENT_USER TRIGGER `", t_name,
+					"` AFTER DELETE ON `", tablename_val,
+					"` FOR EACH ROW BEGIN DELETE FROM `", dstdb,
+					"`.`", tablename_val, "` "
+				) AS 'DELIMITER ;;' ;
+
+				CALL repl_get_table_cols(srcdb, tablename_val, 'DELETE', @tbl_columns, @tbl_prikeys);
+
+				SELECT @tbl_prikeys AS ' WHERE /* --- PK separator --- */';
+
+				SELECT ' LIMIT 1 ; END ;' AS '/* end of delete trigger */'
+				UNION
+				SELECT ';;'
+				UNION
+				SELECT 'DELIMITER ;';
 			ELSE
 					SELECT CONCAT('-- ERROR: wrong trigger type "', t_type, '"') AS '# error';
 		END CASE;
@@ -234,6 +277,9 @@ BEGIN
 	-- now do the job
 	COMMIT;
 	-- ROLLBACK;
+
+	-- switch back to previous schema
+	SELECT 'USE @cur_schema;' AS '-- INFO: which back to remembered schema';
 
 END ;;
 DELIMITER ;
@@ -345,21 +391,32 @@ END ;;
 DELIMITER ;
 /*!50003 DROP PROCEDURE IF EXISTS `repl_get_table_cols` */;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_get_table_cols`(IN tbl_schema varchar(32), IN tbl_table varchar(32), OUT tbl_columns TEXT, OUT tbl_prikeys TEXT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `repl_get_table_cols`(IN tbl_schema varchar(32), IN tbl_table varchar(32), IN trg_type CHAR(6), OUT tbl_columns TEXT, OUT tbl_prikeys TEXT)
 BEGIN
 	-- Declarations {{{
+	DECLARE num_indexes INT DEFAULT 0;
 	DECLARE colname VARCHAR(255);
 	DECLARE column_key VARCHAR(3);
 	DECLARE no_more_rows BOOLEAN;
+	DECLARE col_sep VARCHAR(9);
+	DECLARE key_sep VARCHAR(9);
+	DECLARE nxt_sep VARCHAR(9);
 
 	-- Declare the cursor
 	DECLARE tbl_colums_cur CURSOR FOR
-		SELECT CONCAT('`', c.COLUMN_NAME, '` = NEW.`', c.COLUMN_NAME, '`'),
-			c.COLUMN_KEY
+		SELECT c.COLUMN_NAME, c.COLUMN_KEY
 		FROM information_schema.COLUMNS AS c
 		WHERE c.TABLE_SCHEMA = tbl_schema
 			AND c.TABLE_NAME = tbl_table
 		ORDER BY c.COLUMN_KEY DESC, c.ORDINAL_POSITION;
+
+	DECLARE indexes_count_cur CURSOR FOR
+		SELECT c.COLUMN_NAME, c.COLUMN_KEY
+		FROM information_schema.COLUMNS AS c
+		WHERE c.TABLE_SCHEMA = tbl_schema
+			AND c.TABLE_NAME = tbl_table
+			AND c.COLUMN_KEY = 'PRI'
+		ORDER BY c.ORDINAL_POSITION;
 
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
 	BEGIN
@@ -382,6 +439,20 @@ BEGIN
 	SET tbl_columns = '';
 	SET tbl_prikeys = '';
 
+	SET col_sep = '` = NEW.`';
+	SET key_sep = '` = OLD.`';
+	SET nxt_sep = ' AND ';
+	
+	OPEN indexes_count_cur;
+	SELECT FOUND_ROWS() INTO num_indexes;
+	CLOSE indexes_count_cur;
+
+	IF trg_type = 'INSERT' THEN
+		-- SET col_sep = '` = NEW.`';
+		SET key_sep = '` = NEW.`';
+		SET nxt_sep = ', ';
+	END IF;
+
 	OPEN tbl_colums_cur;
 	the_loop: LOOP
 
@@ -393,12 +464,18 @@ BEGIN
 		END IF;
 
 		-- select '-- DEBUG: ', colname, column_key, tbl_columns;
-		CASE column_key
-			WHEN 'PRI' THEN
-				SET tbl_prikeys = CONCAT(tbl_prikeys, IF(tbl_prikeys = '', '', ', '), colname, ' /* PK */ ');
-			ELSE
-				SET tbl_columns = CONCAT(tbl_columns, IF(tbl_columns = '', '', ', '), colname);
-		END CASE;
+		IF num_indexes = 0 AND trg_type != 'INSERT' THEN
+			/* we don't have indexes, use all columns */ 
+			SET tbl_prikeys = CONCAT(tbl_prikeys, IF(tbl_prikeys = '', '', nxt_sep), '`', colname, key_sep, colname, '`');
+			SET tbl_columns = CONCAT(tbl_columns, IF(tbl_columns = '', '', ', '), '`', colname, col_sep, colname, '`');
+		ELSE
+			CASE column_key
+				WHEN 'PRI' THEN
+					SET tbl_prikeys = CONCAT(tbl_prikeys, IF(tbl_prikeys = '', '', nxt_sep), '`', colname, key_sep, colname, '`', ' /* PK */ ');
+				ELSE
+					SET tbl_columns = CONCAT(tbl_columns, IF(tbl_columns = '', '', ', '), '`', colname, col_sep, colname, '`');
+			END CASE;
+		END IF;
 
 	END LOOP the_loop;
 
