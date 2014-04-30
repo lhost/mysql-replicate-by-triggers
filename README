@@ -1,7 +1,0 @@
-With the following procedures you can synchronize/replicate your
-`mysql` schema into `mysql_$hostname` schema. So you can ignore
-`mysql` schema in replication setting and safely replicate
-`mysql_$hostname` schema.
-
-GOAL: multimaster replication to single backup server
-
